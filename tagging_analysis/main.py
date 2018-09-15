@@ -123,10 +123,6 @@ def write_rows(dictionary, outfile):
             writer.writerow(line)
 
 
-
-
-
-
 def main(infile, outfile):
     df = pandas.read_csv(infile, engine='python')
     print('it worked')
@@ -139,7 +135,3 @@ def main(infile, outfile):
     
     complete_time = datetime.now() - startTime
     print('Time to complete: '+ complete_time)
-
-
-main("TagDataJoinedPython.csv", "output2.csv")
-
