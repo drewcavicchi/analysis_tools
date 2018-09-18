@@ -1,9 +1,16 @@
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename, asksaveasfilename
+
 import pandas as pd
 
+
 def tag_spreadsheet_formatting(tag_spreadsheet):
-    ## formats template tag spreadsheet into boolean TF values
+    # formats template tag spreadsheet into boolean TF values
     dictionary_list = []
-    df = pd.read_csv(tag_spreadsheet)
+    try:
+        df = pd.read_csv(tag_spreadsheet)
+    except:
+        df = pd.read_excel(tag_spreadsheet)
     df = df.fillna('False')
     for i in range(len(df)):
         new_dict = {}
@@ -18,8 +25,6 @@ def tag_spreadsheet_formatting(tag_spreadsheet):
     output_dataframe = pd.DataFrame(dictionary_list)
     return output_dataframe
 
-            
-    
 
 def fix_tag_headers(df):
     # creates a tag header naming convention
@@ -28,8 +33,9 @@ def fix_tag_headers(df):
     for column in df:
         if str(df[column][1]) == 'True' or str(df[column][1]) == 'False':
             new_columns[i] = "Tag: " + column
-        i+=1
+        i += 1
     return new_columns
+
 
 def create_rows(df, tag_list):
     dictionary_list = []
@@ -56,16 +62,16 @@ def create_rows(df, tag_list):
     return output_dataframe
 
 
-    
-
 def main():
-    infile = input("Tag tracker filename: ") + '.csv'
+    Tk().withdraw()
+    infile = askopenfilename(title="Select Tag Tally Sheet", filetypes=("all files", "*.*"))
     formatted_infile = tag_spreadsheet_formatting(infile)
     formatted_infile.columns = fix_tag_headers(formatted_infile)
     formatted_infile = formatted_infile.reindex(sorted(formatted_infile.columns), axis=1)
     tag_list = formatted_infile.columns[1:]
     output_df = create_rows(formatted_infile, tag_list)
-    outfile = (input('Name of film: ').replace(" ", "_") + '_tags.csv').lower()
+    outfile = asksaveasfilename(title="Select output file", defaultextension=".csv",
+                                filetypes=(("csv files", "*.csv"), ("all files", "*.*")))
     output_df.to_csv(outfile)
     print('it worked!')
 
