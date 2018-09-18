@@ -1,76 +1,26 @@
-import pandas
-from datetime import datetime
-import csv
-# TODO: automate useful_columns and headers
+import pandas as pd
 
-startTime = datetime.now()
+def tag_spreadsheet_formatting(tag_spreadsheet):
+    ## formats template tag spreadsheet into boolean TF values
+    dictionary_list = []
+    df = pd.read_csv(tag_spreadsheet)
+    df = df.fillna('False')
+    for i in range(len(df)):
+        new_dict = {}
+        for header in df.columns.values:
+            if header == 'Creative':
+                new_dict[header] = df[header][i]
+            elif str(df[header][i]) == '1.0':
+                new_dict[header] = "True"
+            else:
+                new_dict[header] = "False"
+        dictionary_list.append(new_dict)
+    output_dataframe = pd.DataFrame(dictionary_list)
+    return output_dataframe
 
-useful_columns = ['10-Second Video Views',
-                   '3-Second Video Views',
-                   'Ad ID',
-                   'Ad Name',
-                   'Ad Set ID',
-                   'Ad Set Name',
-                   'Ad name 2',
-                   'Amount Spent (USD)',
-                   'Campaign ID',
-                   'Campaign Name',
-                   'Clicks (All)',
-                   'Creative',
-                   'Frequency',
-                   'Impressions',
-                   'Permalink',
-                   'Post Engagement',
-                   'Reach',
-                   'Reporting Ends',
-                   'Reporting Starts',
-                   'Video Average Watch Time',
-                   'Video Percentage Watched',
-                   'Video Watches at 100%',
-                   'Video Watches at 25%',
-                   'Video Watches at 50%',
-                   'Video Watches at 75%',
-                   'Video Watches at 95%',
-                   'Website Purchases',
-                   'Website Searches',
-                   'Ad Name 8'
-                    ]
-headers = [
-                   '10-Second Video Views',
-                   '3-Second Video Views',
-                   'Ad ID',
-                   'Ad Name',
-                   'Ad Set ID',
-                   'Ad Set Name',
-                   'Ad name 2',
-                   'Amount Spent (USD)',
-                   'Campaign ID',
-                   'Campaign Name',
-                   'Clicks (All)',
-                   'Creative',
-                   'Frequency',
-                   'Impressions',
-                   'Permalink',
-                   'Post Engagement',
-                   'Reach',
-                   'Reporting Ends',
-                   'Reporting Starts',
-                   'Video Average Watch Time',
-                   'Video Percentage Watched',
-                   'Video Watches at 100%',
-                   'Video Watches at 25%',
-                   'Video Watches at 50%',
-                   'Video Watches at 75%',
-                   'Video Watches at 95%',
-                   'Website Purchases',
-                   'Website Searches',
-                   'Ad Name 8',
-                   'Tag',
-                   'in_out',
-                   'repeat_order']
+            
+    
 
-
-                  
 def fix_tag_headers(df):
     # creates a tag header naming convention
     new_columns = df.columns.values
@@ -81,57 +31,43 @@ def fix_tag_headers(df):
         i+=1
     return new_columns
 
+def create_rows(df, tag_list):
+    dictionary_list = []
 
-def get_tag_list(df):
-    # creates a list of tags
-    tag_list = list()
-    for column in df:
-        if str(df[column][1]) == 'True' or str(df[column][1]) == 'False':
-            tag_list.append(column)
-    return tag_list
-
-
-def get_tag_metrics(df, tag_list):
-    rows_list = []
-    for i in range(len(df)):
-        print('working on column {} of {}'.format(i, len(df)))
-        repeat_order = 1
-        for item in tag_list:
-            row_dict = {}
-
-            for header in useful_columns:
-                row_dict[header] = df[header][i]
-            if str(df[item][i]) == 'True':
-                row_dict['in_out'] = 'in'
-                row_dict['repeat_order'] = repeat_order
-                row_dict['Tag'] = item
-                repeat_order += 1
-            if str(df[item][i]) == 'False':
-                row_dict['in_out'] = 'out'
-                row_dict['repeat_order'] = repeat_order
-                row_dict['Tag'] = item
-                repeat_order += 1
-            rows_list.append(row_dict)
-    print('no memory issue here!')
-    return rows_list
-
-def write_rows(dictionary, outfile):
-    with open(outfile, 'w', newline='') as outfile:
-        writer = csv.DictWriter(outfile, fieldnames = headers)
-        writer.writeheader()
-        for line in dictionary:
-            writer.writerow(line)
+    for tag in tag_list:
+        for i in range(len(df[tag])):
+            new_dict = {}
+            # allows filtering for a single record as many to many relationship will cause multiple records!
+            if tag == tag_list[0]:
+                new_dict['Deduplicate Data Filter'] = 'Filter'
+            else:
+                new_dict['Deduplicate Data Filter'] = 'No Filter'
+            if str(df[tag][i]) == 'True':
+                new_dict['Tag'] = tag
+                new_dict['Creative'] = df['Creative'][i]
+                new_dict['in_out'] = 'in'
+                dictionary_list.append(new_dict)
+            elif str(df[tag][i]) == 'False':
+                new_dict['Tag'] = tag
+                new_dict['Creative'] = df['Creative'][i]
+                new_dict['in_out'] = 'out'
+                dictionary_list.append(new_dict)
+    output_dataframe = pd.DataFrame(dictionary_list)
+    return output_dataframe
 
 
-def main(infile, outfile):
-    df = pandas.read_csv(infile, engine='python')
-    print('it worked')
-    df.columns = fix_tag_headers(df)
-    print('get tag list')
-    tag_list = get_tag_list(df)
-
-    dictionary_to_write = get_tag_metrics(df, tag_list)
-    write_rows(dictionary_to_write, outfile)
     
-    complete_time = datetime.now() - startTime
-    print('Time to complete: '+ complete_time)
+
+def main():
+    infile = input("Tag tracker filename: ") + '.csv'
+    formatted_infile = tag_spreadsheet_formatting(infile)
+    formatted_infile.columns = fix_tag_headers(formatted_infile)
+    formatted_infile = formatted_infile.reindex(sorted(formatted_infile.columns), axis=1)
+    tag_list = formatted_infile.columns[1:]
+    output_df = create_rows(formatted_infile, tag_list)
+    outfile = (input('Name of film: ').replace(" ", "_") + '_tags.csv').lower()
+    output_df.to_csv(outfile)
+    print('it worked!')
+
+
+main()
