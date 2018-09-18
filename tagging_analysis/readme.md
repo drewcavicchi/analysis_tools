@@ -5,10 +5,10 @@ Simple tool for creating a file for categorizing creative type tags in Tableau
 
 
 
-## Use
+## Intructions
 - Download tag spreadsheet template
 - Add as many columns as needed
-- Place main.py program in the same folder as the template file
+- use main.py
 - Follow the prompts
 
 ## Notes
